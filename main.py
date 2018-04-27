@@ -2,6 +2,7 @@ import os
 import io
 import zipfile
 import requests
+from tempfile import NamedTemporaryFile
 
 import argparse
 
@@ -19,8 +20,17 @@ parser = argparse.ArgumentParser(
     'Python wrapper for downloading WikiText Data.'
 )
 
-parser.add_argument('--text', required=False, default='wikitext-2', choices=list(TEXTS.keys()))
-parser.add_argument('--dir', required=False, default='data')
+parser.add_argument(
+    '--text',
+    required=False,
+    default='wikitext-2',
+    choices=list(TEXTS.keys()),
+)
+parser.add_argument(
+    '--dir',
+    required=False,
+    default='data',
+)
 
 TMP_FILE = 'test.zip'
 
@@ -31,14 +41,20 @@ if __name__ == "__main__":
     else:
         r = requests.get(TEXTS[args.text], stream=True)
 
-        with open(TMP_FILE, 'wb') as f:
+        # download WikiText .zip file
+        with NamedTemporaryFile() as f:
             total_length = int(r.headers.get('content-length'))
-            pbar = tqdm(r.iter_content(chunk_size=1024), total=(total_length//1024)+1, desc="Downloading {}".format(args.text))
+            pbar = tqdm(
+                r.iter_content(chunk_size=1024),
+                total=(total_length//1024),
+                desc="Downloading {}".format(args.text),
+                unit='bytes',
+            )
             for chunk in pbar:
                 if chunk:
                     f.write(chunk)
                     f.flush()
 
-        with zipfile.ZipFile(TMP_FILE, 'r') as z:
-            z.extractall(path='data')
-            os.remove(TMP_FILE)
+            # extract contents from .zip file
+            with zipfile.ZipFile(f, 'r') as z:
+                z.extractall(path='data')
