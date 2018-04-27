@@ -21,7 +21,7 @@ parser = argparse.ArgumentParser(
 )
 
 parser.add_argument(
-    '--text',
+    '-text',
     required=False,
     default='wikitext-2',
     choices=list(TEXTS.keys()),
@@ -31,12 +31,17 @@ parser.add_argument(
     required=False,
     default='data',
 )
+parser.add_argument(
+    '--f',
+    required=False,
+    default=False,
+)
 
 TMP_FILE = 'test.zip'
 
 if __name__ == "__main__":
     args = parser.parse_args()
-    if os.path.exists(os.path.join(args.dir, args.text)):
+    if os.path.exists(os.path.join(args.dir, args.text)) and not args.f:
         print("{} already exists.\nCancelling download.".format(args.text))
     else:
         r = requests.get(TEXTS[args.text], stream=True)
